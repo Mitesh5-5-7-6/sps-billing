@@ -1,26 +1,104 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: 'Sora';
+    src: url('/fonts/sora/Sora-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Sora';
+    src: url('/fonts/sora/Sora-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+    --dark-bg: #111827;
+    --bg-color: #1f2937;
+    --primary-bg: #364153;
+    /* gray-600 */
+    --secondary-bg: #4a5565;
+    /* gray-700 */
+    --gray-bg: #4a4848;
+    --dark-gray-bg: #333333;
+    --orange-bg: #ff8901;
+    --black-bg: #000000;
+    --white-bg: #ffffff;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+    --hover-white: #f3f4f6;
+    --hover-primary: #99a1af;
+    /* gray-400 */
+    --hover-secondary: #e5e7eb;
+    /* gray-200 */
+    --hover-orange: #ffa500;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    --dark-text: #1e2939;
+    /* gray-800 */
+    --primary-text: #f3f4f6;
+    --secondary-text: #9ca3af;
+    --orange-text: #ff8901;
+
+    --gray-text: #4b5563;
+    --white-text: #ffffff;
+    --black-text: #1e1e1e;
+
+    --border-color: #999999;
+
+    --danger-text: #fb2c36;
+    --icons-red-color: red;
+
+    --green-toast: green;
+    --red-toast: red;
+
+    --focus-color: #4671ff;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+    font-family: 'Sora', Times, 'Times New Roman', serif;
+    background-color: var(--dark-bg);
+    color: var(--primary-text);
+}
+
+/* scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--primary-bg);
+    border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--hover-primary);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+input[type="date"] {
+    background-image: url('/calendar.png');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 25px 25px;
+}
+
+input[type="date"]:focus {
+    outline: 2px solid var(--focus-color);
+    outline-offset: 2px;
 }

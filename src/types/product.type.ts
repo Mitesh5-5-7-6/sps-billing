@@ -1,0 +1,45 @@
+import { Document } from "mongoose";
+
+interface ProductBase {
+    name: string;
+    price: number | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export interface IProduct extends ProductBase, Document { }
+export interface Product extends ProductBase {
+    _id?: string;
+}
+
+export interface InvoiceItem {
+    p_id: string;
+    product_name: string;
+    price: number;
+    quantity: number;
+    total_amount: number;
+}
+
+export interface InvoiceValues {
+    invoice: string;
+    date: string;
+    name: string;
+    address: string;
+    items: InvoiceItem[];
+}
+
+export interface BillItem {
+    p_id: string;
+    product_name: string;
+    price: number;
+    quantity: number;
+    total_amount: number;
+}
+
+export interface BillRequestBody {
+    invoice: string;
+    date: string;
+    name: string;
+    address?: string;
+    items: BillItem[];
+}
