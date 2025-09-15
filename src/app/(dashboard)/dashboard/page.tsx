@@ -193,7 +193,7 @@ export default function InvoiceGenerator() {
         // Product name with description
         const productText = item.product_name || productNameMap[item.p_id] || "Product";
         doc.text(productText.toUpperCase(), 35, currentY);
-        doc.text("VIDE OUR CERT. NO. JSN - 25/3036", 35, currentY + 4);
+        // doc.text("VIDE OUR CERT. NO. JSN - 25/3036", 35, currentY + 4);
 
         doc.text(String(qty), 130, currentY);
         doc.text(price.toFixed(0) + "/-", 152, currentY);
@@ -294,7 +294,7 @@ export default function InvoiceGenerator() {
                           p_id: "",
                           product_name: "",
                           price: 0,
-                          quantity: 1,
+                          quantity: "",
                           total_amount: 0,
                         })
                       }
@@ -322,7 +322,7 @@ export default function InvoiceGenerator() {
                           if (productId === undefined) {
                             setFieldValue(`items.${index}.p_id`, "");
                             setFieldValue(`items.${index}.product_name`, "");
-                            setFieldValue(`items.${index}.price`, 0);
+                            setFieldValue(`items.${index}.price`, "");
                             setFieldValue(`items.${index}.total_amount`, 0);
                             return;
                           }
@@ -355,8 +355,8 @@ export default function InvoiceGenerator() {
                         placeholder="Quantity"
                         value={item.quantity}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const qty = Number(e.target.value || 1);
-                          const price = values.items[index].price || 0;
+                          const qty = Number(e.target.value || NaN);
+                          const price = values.items[index].price || NaN;
 
                           setFieldValue(`items.${index}.quantity`, qty);
                           setFieldValue(

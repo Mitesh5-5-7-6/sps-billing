@@ -26,13 +26,13 @@ const page = () => {
     const { showPopup, hidePopup } = usePopup();
 
     const { data: products, isLoading, error } = useProducts();
-    const { data: bill } = useBill();
-    const { data: mBill } = useMonthlyBill('2025-08');
+    // const { data: bill } = useBill();
+    // const { data: mBill } = useMonthlyBill('2025-08');
 
-    useEffect(() => {
-        console.log(bill)
-        console.log("Monthly Bill:", mBill);
-    }, [mBill, bill]);
+    // useEffect(() => {
+    //     console.log(bill)
+    //     console.log("Monthly Bill:", mBill);
+    // }, [mBill, bill]);
 
     const createProduct = useCreateProduct();
     const updateProduct = useUpdateProduct();
