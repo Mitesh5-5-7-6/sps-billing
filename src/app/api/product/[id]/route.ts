@@ -7,17 +7,19 @@ import { apiResponse, badRequest, notFound, internalServerError } from '@/lib/ap
 import { productSchema } from '@/lib/validation/product.schema';
 import mongoose from 'mongoose';
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+// ✅ Fixed: params must be awaited
+export async function GET(context: { params: Promise<{ id: string }> }) {
     const session = await checkAuth();
     if (session instanceof Response) return session;
 
     try {
         await dbConnect();
-        if (!mongoose.Types.ObjectId.isValid(params.id)) {
+        const { id } = await context.params; // await params
+        if (!mongoose.Types.ObjectId.isValid(id)) {
             return badRequest("Invalid product ID");
         }
 
-        const product = await productModel.findById(params.id);
+        const product = await productModel.findById(id);
         if (!product) return notFound("Product not found");
 
         return apiResponse(product, 'Product fetched successfully', 200);
@@ -26,13 +28,14 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
     const session = await checkAuth();
     if (session instanceof Response) return session;
 
     try {
         await dbConnect();
-        if (!mongoose.Types.ObjectId.isValid(params.id)) {
+        const { id } = await context.params; // await params
+        if (!mongoose.Types.ObjectId.isValid(id)) {
             return badRequest("Invalid product ID");
         }
 
@@ -41,7 +44,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         if (!parse.success) return badRequest(parse.error.message);
 
         const updated = await productModel.findByIdAndUpdate(
-            params.id,
+            id,
             { $set: parse.data },
             { new: true }
         );
@@ -54,17 +57,18 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(context: { params: Promise<{ id: string }> }) {
     const session = await checkAuth();
     if (session instanceof Response) return session;
 
     try {
         await dbConnect();
-        if (!mongoose.Types.ObjectId.isValid(params.id)) {
+        const { id } = await context.params; // await params
+        if (!mongoose.Types.ObjectId.isValid(id)) {
             return badRequest("Invalid product ID");
         }
 
-        const deleted = await productModel.findByIdAndDelete(params.id);
+        const deleted = await productModel.findByIdAndDelete(id);
         if (!deleted) return notFound("Product not found");
 
         return apiResponse(null, 'Product deleted successfully', 200);

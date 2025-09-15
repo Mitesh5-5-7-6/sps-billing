@@ -5,7 +5,6 @@ import Bill from "@/models/bill.model";
 import { internalServerError } from "@/lib/apiResponse";
 
 export async function GET(
-  req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {

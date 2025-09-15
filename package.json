@@ -6,7 +6,17 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "npx --yes rimraf node_modules/.pnpm/@next+swc-win32*",
+    "prepare": "husky install",
+    "type-check": "tsc --noEmit",
+    "analyze": "ANALYZE=true next build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "rimraf node_modules package-lock.json",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "@next/swc-win32-x64-msvc": "^15.5.2",
@@ -14,6 +24,7 @@
     "bcryptjs": "^3.0.2",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.2.1",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.12",
     "jsonwebtoken": "^9.0.2",
