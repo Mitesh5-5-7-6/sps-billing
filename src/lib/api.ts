@@ -1,41 +1,30 @@
 import { getSession } from "next-auth/react";
-import { BillRequestBody, Product } from "@/types/product.type";
+import { BillRequestBody, BillResponse, Product } from "@/types/product.type";
+import { ApiError } from "next/dist/server/api-utils";
 
-const API_BASE_URL = process.env.NEXT_API_BASE_URL || "";
-
-class ApiError extends Error {
-    status: number;
-
-    constructor(message: string, status: number) {
-        super(message);
-        this.status = status;
-        this.name = "ApiError";
-    }
-}
+const API_BASE_URL = (process.env.NEXT_API_BASE_URL || "").replace(/\/$/, "");
 
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const session = await getSession();
 
-    const config: RequestInit = {
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
-        ...options,
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(options.headers as Record<string, string>),
     };
 
-    if (session?.user?.email) {
-        config.headers = {
-            ...config.headers,
-            Authorization: `Bearer ${session.accessToken || ""}`,
-        };
+    if (session?.accessToken) {
+        headers["Authorization"] = `Bearer ${session.accessToken}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+    });
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(errorData.message || `HTTP ${response.status}: ${response.statusText}`, response.status);
+        const errorMessage = errorData.message || response.statusText || "An error occurred";
+        throw new ApiError(response.status, errorMessage);
     }
 
     return response.json();
@@ -49,10 +38,21 @@ export const api = {
                 body: JSON.stringify(credentials),
             }),
     },
+    bill: {
+        createBill: async (body: BillRequestBody): Promise<BillResponse> => {
+            const res = await apiRequest<{ success: boolean; message: string; data: BillResponse }>("/api/bill", {
+                method: "POST",
+                body: JSON.stringify(body),
+            });
+            return res.data;
+        },
+        getBillById: (id: string): Promise<BillResponse> =>
+            apiRequest(`/api/bill/${id}`),
+        getMonthlyBill: (month: string): Promise<BillResponse[]> =>
+            apiRequest(`/api/bill/monthly?month=${month}`),
+    },
     product: {
         getAll: (): Promise<{ data: Product[] }> => apiRequest("/api/product"),
-        getBill: (): Promise<{ data: BillRequestBody[] }> => apiRequest("/api/bill"),
-        getMonthlyBill: (month: string): Promise<{ data: BillRequestBody[] }> => apiRequest(`/api/bill/monthly?month=${month}`),
         create: (data: Product): Promise<{ message: string; createdProduct: Product }> =>
             apiRequest("/api/product", {
                 method: "POST",

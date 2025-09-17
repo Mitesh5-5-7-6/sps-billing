@@ -1,10 +1,14 @@
+// src/app/api/bill/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { checkAuth } from "@/lib/checkAuth";
 import dbConnect from "@/lib/mongodb";
 import billModel from "@/models/bill.model";
 import PDFDocument from "pdfkit";
-import { BillItem, BillRequestBody } from "@/types/product.type";
+import { BillRequestBody } from "@/types/product.type";
 import { internalServerError } from "@/lib/apiResponse";
+import { numberToWords } from "@/utils/numberToWords";
+import fs from "node:fs";
+import path from "node:path";
 
 export async function POST(req: NextRequest) {
   const session = await checkAuth();
@@ -12,246 +16,170 @@ export async function POST(req: NextRequest) {
 
   try {
     await dbConnect();
-
     const body: BillRequestBody = await req.json();
     const { invoice, date, name, address, items } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Items array is required and cannot be empty",
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "Items array is required and cannot be empty" }, { status: 400 });
     }
 
-    // Number to words conversion function
-    const numberToWords = (num: number): string => {
-      const ones = [
-        "",
-        "One",
-        "Two",
-        "Three",
-        "Four",
-        "Five",
-        "Six",
-        "Seven",
-        "Eight",
-        "Nine",
-      ];
-      const teens = [
-        "Ten",
-        "Eleven",
-        "Twelve",
-        "Thirteen",
-        "Fourteen",
-        "Fifteen",
-        "Sixteen",
-        "Seventeen",
-        "Eighteen",
-        "Nineteen",
-      ];
-      const tens = [
-        "",
-        "",
-        "Twenty",
-        "Thirty",
-        "Forty",
-        "Fifty",
-        "Sixty",
-        "Seventy",
-        "Eighty",
-        "Ninety",
-      ];
+    // PDF init
+    const doc = new PDFDocument({ size: "A4", margin: 30 }); // smaller margin to gain room
+    const chunks: Buffer[] = [];
+    doc.on("data", (c) => chunks.push(c));
+    const endPromise = new Promise<Buffer>((resolve) => doc.on("end", () => resolve(Buffer.concat(chunks))));
 
-      if (num === 0) return "Zero";
+    // Layout constants
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+    const left = 30;
+    const right = pageWidth - 30;
+    const tableWidth = right - left;
+    const baseRowHeight = 22; // minimum row height
+    const footerBlockHeight = 0; // total row + in words + signature block
+    const headerBlockBottom = 165; // where table starts on each page
 
-      const convertHundreds = (n: number): string => {
-        let result = "";
-        if (n >= 100) {
-          result += ones[Math.floor(n / 100)] + " Hundred ";
-          n %= 100;
-        }
-        if (n >= 20) {
-          result += tens[Math.floor(n / 10)] + " ";
-          n %= 10;
-        } else if (n >= 10) {
-          result += teens[n - 10] + " ";
-          return result;
-        }
-        if (n > 0) {
-          result += ones[n] + " ";
-        }
-        return result;
-      };
-
-      if (num < 1000) {
-        return convertHundreds(num).trim();
-      } else if (num < 100000) {
-        return (
-          convertHundreds(Math.floor(num / 1000)) +
-          "Thousand " +
-          convertHundreds(num % 1000)
-        );
-      } else if (num < 10000000) {
-        return (
-          convertHundreds(Math.floor(num / 100000)) +
-          "Lakh " +
-          convertHundreds((num % 100000) / 1000) +
-          "Thousand " +
-          convertHundreds(num % 1000)
-        );
-      }
-      return num.toString();
+    const colWidths = {
+      sr: 42,
+      name: 260,
+      qty: 70,
+      rate: 70,
+      amt: 88,
+    };
+    const colX = {
+      sr: left,
+      name: left + 50,
+      qty: left + 50 + 260,
+      rate: left + 50 + 260 + 70,
+      amt: left + 50 + 260 + 70 + 70,
     };
 
-    // ✅ Create Professional PDF
-    const doc = new PDFDocument({
-      margin: 50,
-      font: "Helvetica",
-      size: "A4",
-    });
+    const formattedDate = date.split("-").reverse().join("-");
 
-    const chunks: Buffer[] = [];
-    doc.on("data", (chunk) => chunks.push(chunk));
-    const endPromise = new Promise<Buffer>((resolve) => {
-      doc.on("end", () => resolve(Buffer.concat(chunks)));
-    });
+    // Drawing helpers
+    const logoPath = path.join(process.cwd(), "public", "logo.png"); // or .jpg
+    const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : undefined;
 
-    // PDF Header with professional styling
-    doc.rect(20, 20, 550, 60).stroke();
+    const drawHeader = () => {
+      doc.rect(left - 10, 20, tableWidth + 20, 70).stroke();
 
-    doc
-      .fontSize(18)
-      .font("Helvetica-Bold")
-      .text("SPS ANALYTICAL LABORATORY", 20, 35, {
-        width: 550,
-        align: "center",
-      });
-
-    doc
-      .fontSize(10)
-      .font("Helvetica")
-      .text("503, B.C.-3, RANICCHAL, AHMEDABAD(GUJARAT) 380013", 20, 55, {
-        width: 550,
-        align: "center",
-      })
-      .text("GSTIN: 24AABCS1234C1Z5", 20, 68, {
-        width: 550,
-        align: "center",
-      });
-
-    // Invoice details
-    doc
-      .fontSize(12)
-      .font("Helvetica-Bold")
-      .text(`Invoice No.: ${invoice}`, 30, 100)
-      .text(`Date: ${date}`, 400, 100);
-
-    // Client details
-    doc.fontSize(11).text(`M/S. ${name.toUpperCase()}`, 30, 120);
-
-    if (address && address !== "—") {
-      doc.font("Helvetica").text(address, 30, 135);
-    }
-
-    // Table setup
-    const tableTop = 160;
-    const tableLeft = 30;
-    const tableWidth = 540;
-
-    // Table header
-    doc
-      .rect(tableLeft, tableTop, tableWidth, 25)
-      .fillAndStroke("#f0f0f0", "#000");
-
-    doc
-      .fontSize(10)
-      .font("Helvetica-Bold")
-      .fillColor("#000")
-      .text("Sr.No.", tableLeft + 5, tableTop + 8)
-      .text("Particulars", tableLeft + 50, tableTop + 8)
-      .text("No. of", tableLeft + 320, tableTop + 5)
-      .text("sample", tableLeft + 320, tableTop + 12)
-      .text("Rate", tableLeft + 380, tableTop + 8)
-      .text("Amount", tableLeft + 450, tableTop + 5)
-      .text("(in Rs)", tableLeft + 450, tableTop + 12);
-
-    // Table content
-    let currentY = tableTop + 35;
-    let totalAmount = 0;
-
-    doc.font("Helvetica");
-
-    items.forEach((item: BillItem, index: number) => {
-      const productName = item.product_name || "Unknown Product";
-      const price = Number(item.price) || 0;
-      const qty = Number(item.quantity) || 0;
-      const total = Number(item.total_amount) || price * qty;
-      totalAmount += total;
-
-      // Row background (alternating colors)
-      if (index % 2 === 0) {
-        doc
-          .rect(tableLeft, currentY - 5, tableWidth, 40)
-          .fillAndStroke("#f9f9f9", "#ccc");
-      } else {
-        doc.rect(tableLeft, currentY - 5, tableWidth, 40).stroke("#ccc");
+      // Logo at left (max height 50)
+      if (logoBuffer) {
+        const logoMaxH = 50;
+        const logoMaxW = 90;
+        // Place with preserved aspect ratio
+        doc.image(logoBuffer, left - 5, 25, { fit: [logoMaxW, logoMaxH] });
       }
 
-      doc
-        .fillColor("#000")
-        .text(String(index + 1), tableLeft + 5, currentY)
-        .text(productName.toUpperCase(), tableLeft + 50, currentY)
-        .text(
-          "VIDE OUR CERT. NO. JSN - 25/3036",
-          tableLeft + 50,
-          currentY + 12,
-          {
-            // fontSize: 8,
-            ellipsis: true,
-            width: 250,
-          }
-        )
-        .text(String(qty), tableLeft + 330, currentY)
-        .text(`${price.toFixed(0)}/-`, tableLeft + 380, currentY)
-        .text(`${total.toFixed(0)}/-`, tableLeft + 450, currentY);
+      // Title centered; leave room by shrinking width if logo present
+      const titleLeft = logoBuffer ? left + 70 : left;
+      const titleWidth = logoBuffer ? tableWidth - 120 : tableWidth;
 
-      currentY += 45;
-    });
+      doc.font("Helvetica-Bold").fontSize(18)
+        .text("SPS ANALYTICAL LABORATORY", titleLeft, 28, { align: "center", width: titleWidth });
 
-    // Total section
-    const totalSectionY = currentY + 10;
-    doc
-      .rect(tableLeft, totalSectionY, tableWidth, 25)
-      .fillAndStroke("#f0f0f0", "#000");
+      doc.font("Helvetica").fontSize(10)
+        .text("503, B.C.-3, RANICCHAL, AHMEDABAD(GUJARAT) 380013", titleLeft, 50, { align: "center", width: titleWidth })
+        .text("GSTIN: 24AABCS1234C1Z5", titleLeft, 63, { align: "center", width: titleWidth });
 
-    doc
-      .fontSize(11)
-      .font("Helvetica-Bold")
-      .text(
-        `IN WORD.: ${numberToWords(Math.floor(totalAmount))} only`,
-        tableLeft + 5,
-        totalSectionY + 8
-      )
-      .text("TOTAL", tableLeft + 320, totalSectionY + 8)
-      .text(`${totalAmount.toFixed(0)}/-`, tableLeft + 450, totalSectionY + 8);
+      // Bill info + party
+      doc.font("Helvetica-Bold").fontSize(11);
+      doc.text(`Invoice No.: ${invoice}`, left, 98);
+      doc.text(`Date: ${formattedDate}`, right - 160, 98, { width: 150, align: "right" });
 
-    // Footer section
-    const footerY = totalSectionY + 50;
-    doc
-      .fontSize(10)
-      .text("For, SPS ANALYTICAL LABORATORY", tableLeft + 350, footerY)
-      .text("RECEIVED", tableLeft + 5, footerY + 30);
+      doc.font("Helvetica-Bold").fontSize(11).text(`M/S. ${String(name || "").toUpperCase()}`, left, 120, { width: tableWidth });
+      if (address && address !== "—") {
+        doc.font("Helvetica").fontSize(10).text(address, left, 136, { width: tableWidth });
+      }
+    };
 
-    // Outer border
-    doc.rect(20, 90, 550, footerY + 50 - 90).stroke();
+
+    const drawTableHeader = (y: number) => {
+      doc.save();
+      doc.rect(left, y, tableWidth, baseRowHeight).fillAndStroke("#f0f0f0", "#000");
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(10);
+      doc.text("Sr.No.", colX.sr, y + 6, { width: colWidths.sr, align: "center" });
+      doc.text("Particulars", colX.name, y + 6, { width: colWidths.name, align: "left" });
+      doc.text("No. of sample", colX.qty, y + 6, { width: colWidths.qty, align: "center" });
+      doc.text("Rate", colX.rate, y + 6, { width: colWidths.rate, align: "center" });
+      doc.text("Amount (Rs)", colX.amt, y + 6, { width: colWidths.amt, align: "center" });
+      doc.restore();
+    };
+
+    const ensureSpace = (needed: number, currentY: number) => {
+      if (currentY + needed > pageHeight - 30) {
+        doc.addPage();
+        drawHeader();
+        drawTableHeader(headerBlockBottom);
+        return headerBlockBottom + baseRowHeight;
+      }
+      return currentY;
+    };
+
+    // Start page
+    drawHeader();
+    let y = headerBlockBottom;
+    drawTableHeader(y);
+    y += baseRowHeight;
+
+    // Rows
+    let grandTotal = 0;
+    doc.font("Helvetica").fontSize(10);
+
+    for (let i = 0; i < items.length; i += 1) {
+      const it = items[i] || {};
+      const nameText = String(it.product_name || "UNKNOWN PRODUCT").toUpperCase();
+      const qty = Number(it.quantity || 0);
+      const rate = Number(it.price || 0);
+      const total = Number(it.total_amount ?? rate * qty);
+      grandTotal += total;
+
+      // Wrap product name to available width and compute row height
+      const nameLines = doc.heightOfString(nameText, { width: colWidths.name });
+      const rowHeight = Math.max(baseRowHeight, Math.ceil(nameLines / 12) * 14 + 10); // approximate line height
+
+      // Keep footer block visible: if adding this row + footer would overflow, new page
+      y = ensureSpace(rowHeight + footerBlockHeight, y);
+
+      // Row rectangle
+      doc.rect(left, y, tableWidth, rowHeight).stroke("#000");
+
+      // Cells
+      doc.text(String(i + 1), colX.sr, y + 6, { width: colWidths.sr, align: "center" });
+      doc.text(nameText, colX.name, y + 6, { width: colWidths.name, align: "left" });
+      doc.text(qty.toString(), colX.qty, y + 6, { width: colWidths.qty, align: "center" });
+      doc.text(`${rate.toFixed(0)}/-`, colX.rate, y + 6, { width: colWidths.rate, align: "center" });
+      doc.text(`${total.toFixed(0)}/-`, colX.amt, y + 6, { width: colWidths.amt, align: "center" });
+
+      y += rowHeight;
+    }
+
+    y = ensureSpace(footerBlockHeight, y);
+
+    const words = `${numberToWords(Math.floor(grandTotal))} only`;
+    // Total row
+    doc.save();
+    doc.rect(left, y, tableWidth, baseRowHeight).fillAndStroke("#f0f0f0", "#000");
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(11);
+    doc.text(`In words: ${words}`, left + 10, y + 6, { width: tableWidth });
+    doc.text("TOTAL", colX.rate, y + 6, { width: colWidths.rate, align: "right" });
+    doc.text(`${grandTotal.toFixed(0)}/-`, colX.amt, y + 6, { width: colWidths.amt, align: "center" });
+    doc.restore();
+    y += baseRowHeight + 6;
+
+    // In words
+    y += 28;
+
+    // Signature / footer
+    doc.moveTo(left, y).lineTo(right, y).stroke("#ccc");
+    y += 10;
+    doc.font("Helvetica").fontSize(10).text("RECEIVED", left, y);
+    doc.font("Helvetica").fontSize(10).text("For, SPS ANALYTICAL LABORATORY", right - 240, y, { width: 240, align: "right" });
 
     doc.end();
     const pdfBuffer = await endPromise;
 
-    // ✅ Save in DB
+    // Persist
     const newBill = await billModel.create({
       invoiceNo: invoice,
       date,
@@ -261,7 +189,7 @@ export async function POST(req: NextRequest) {
       pdf: pdfBuffer,
     });
 
-    return NextResponse.json({ success: true, id: newBill._id });
+    return NextResponse.json({ success: true, message: "Bill Added", data: newBill });
   } catch (error) {
     return internalServerError(error);
   }

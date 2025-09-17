@@ -42,4 +42,13 @@ export interface BillRequestBody {
     name: string;
     address?: string;
     items: BillItem[];
+    pdf?: { type: string; data: number[] };
+}
+
+export interface BillResponse extends BillRequestBody {
+    _id: string;
+    data: BillRequestBody;
+    invoiceNo: string;
+    createdAt: string;
+    updatedAt: string;
 }

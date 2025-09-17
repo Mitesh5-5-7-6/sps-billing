@@ -1,26 +1,36 @@
 // app/api/bill/[id]/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import Bill from "@/models/bill.model";
-import { internalServerError } from "@/lib/apiResponse";
+import BillModel from "@/models/bill.model";
+import { notFound, internalServerError } from "@/lib/apiResponse";
+import { checkAuth } from "@/lib/checkAuth";
 
-export async function GET(
-  context: { params: Promise<{ id: string }> }
-) {
+interface Params {
+  params: { id: string };
+}
+
+export async function GET(_req: NextRequest, { params }: Params) {
+  const session = await checkAuth();
+  if (session instanceof Response) return session;
+
+  const { id } = params;
+  if (!id) return notFound("Bill ID is required");
+
   try {
     await dbConnect();
+    const bill = await BillModel.findById(id);
 
-    const { id } = await context.params;
-    const bill = await Bill.findById(id);
     if (!bill) {
-      return NextResponse.json(
-        { success: false, error: "Bill not found" },
-        { status: 404 }
-      );
+      return notFound("Bill not found");
     }
 
-    return NextResponse.json({ success: true, message: "Bill data fetch", data: bill });
+    return NextResponse.json({
+      success: true,
+      message: "Bill fetched successfully",
+      bill,
+    });
   } catch (error) {
-    return internalServerError(error);
+    console.error("Error fetching bill:", error);
+    return internalServerError("Failed to fetch bill");
   }
 }

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import React, { FunctionComponent, useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button/Button'
 import DataTable, { Column } from '@/components/ui/DataTable'
 import { usePopup } from '@/components/ui/DialogProvider'
@@ -17,22 +17,15 @@ import * as yup from "yup";
 const productValidationSchema = yup.object({
     name: yup.string().required(),
     price: yup.string().required()
-})
+});
 
-export const ProductPage: FunctionComponent = () => {
+function ProductPage() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
     const { showPopup, hidePopup } = usePopup();
 
     const { data: products, isLoading, error } = useProducts();
-    // const { data: bill } = useBill();
-    // const { data: mBill } = useMonthlyBill('2025-08');
-
-    // useEffect(() => {
-    //     console.log(bill)
-    //     console.log("Monthly Bill:", mBill);
-    // }, [mBill, bill]);
 
     const createProduct = useCreateProduct();
     const updateProduct = useUpdateProduct();
@@ -185,5 +178,7 @@ export const ProductPage: FunctionComponent = () => {
                 </div>
             </Drawer>
         </>
-    )
+    );
 }
+
+export default ProductPage;
