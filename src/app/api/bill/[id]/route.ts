@@ -1,10 +1,11 @@
 // app/api/bill/[id]/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Bill from "@/models/bill.model";
 import { internalServerError } from "@/lib/apiResponse";
 
 export async function GET(
+  _request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
