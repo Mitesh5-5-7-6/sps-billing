@@ -8,7 +8,7 @@ import { productSchema } from '@/lib/validation/product.schema';
 import mongoose from 'mongoose';
 
 // ✅ Fixed: params must be awaited
-export async function GET(context: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
     const session = await checkAuth();
     if (session instanceof Response) return session;
 
@@ -57,7 +57,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     }
 }
 
-export async function DELETE(context: { params: Promise<{ id: string }> }) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
     const session = await checkAuth();
     if (session instanceof Response) return session;
 
