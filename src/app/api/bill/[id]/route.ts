@@ -1,5 +1,5 @@
 // app/api/bill/[id]/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Bill from "@/models/bill.model";
 import { internalServerError } from "@/lib/apiResponse";
