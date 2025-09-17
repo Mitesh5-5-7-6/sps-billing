@@ -7,6 +7,7 @@ import Link from "next/link";
 import { HiOutlineMenuAlt2, HiOutlineMenuAlt3 } from "react-icons/hi";
 import { signOut } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Route } from 'next';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -17,7 +18,7 @@ interface MenuItem {
     id: string;
     label: string;
     icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>;
-    path: string;
+    path: Route;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {

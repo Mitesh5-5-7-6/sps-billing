@@ -1,7 +1,7 @@
 // app/api/bill/monthly/route.ts
 import dbConnect from "@/lib/mongodb";
-import {checkAuth} from "@/lib/checkAuth";
-import {apiResponse, internalServerError, badRequest} from "@/lib/apiResponse";
+import { checkAuth } from "@/lib/checkAuth";
+import { apiResponse, internalServerError, badRequest } from "@/lib/apiResponse";
 import billModel from "@/models/bill.model";
 
 export async function GET(req: Request) {
@@ -11,11 +11,11 @@ export async function GET(req: Request) {
     try {
         await dbConnect();
 
-        const {searchParams} = new URL(req.url);
-        let month = searchParams.get("month");
+        const { searchParams } = new URL(req.url);
+        const month = searchParams.get("month");
         if (!month) return badRequest("Month is required in YYYY-MM format");
 
-        let [year, monthNum] = month.split("-").map(Number);
+        const [year, monthNum] = month.split("-").map(Number);
         if (!year || !monthNum) return badRequest("Invalid month format");
 
         // Start of month → Start of next month
@@ -24,25 +24,25 @@ export async function GET(req: Request) {
 
         // Group bills by client
         const groupedBills = await billModel.aggregate([
-            {$match: {createdAt: {$gte: start, $lt: end}}},
+            { $match: { createdAt: { $gte: start, $lt: end } } },
             {
                 $group: {
                     _id: "$clientName",
-                    totalAmount: {$sum: "$totalAmount"},
-                    bills: {$push: "$$ROOT"},
+                    totalAmount: { $sum: "$totalAmount" },
+                    bills: { $push: "$$ROOT" },
                 },
             },
         ]);
 
         // Overall summary
         const summary = await billModel.aggregate([
-            {$match: {createdAt: {$gte: start, $lt: end}}},
+            { $match: { createdAt: { $gte: start, $lt: end } } },
             {
                 $group: {
                     _id: null,
-                    totalSales: {$sum: "$totalAmount"},
-                    totalBills: {$sum: 1},
-                    clients: {$addToSet: "$clientName"},
+                    totalSales: { $sum: "$totalAmount" },
+                    totalBills: { $sum: 1 },
+                    clients: { $addToSet: "$clientName" },
                 },
             },
             {
@@ -50,14 +50,14 @@ export async function GET(req: Request) {
                     _id: 0,
                     totalSales: 1,
                     totalBills: 1,
-                    totalClients: {$size: "$clients"},
+                    totalClients: { $size: "$clients" },
                 },
             },
         ]);
 
         return apiResponse(
             {
-                summary: summary[0] || {totalSales: 0, totalBills: 0, totalClients: 0},
+                summary: summary[0] || { totalSales: 0, totalBills: 0, totalClients: 0 },
                 groupedBills,
             },
             "Monthly bills summary fetched successfully",

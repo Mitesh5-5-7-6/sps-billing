@@ -16,7 +16,7 @@ interface NumberInputProps {
 
 export const NumberInput: React.FC<NumberInputProps> = ({ label, name, placeholder, ref,
     className = "",
-    readOnly = false, required = false, disabled = false, value, ...props }) => {
+    readOnly = false, required = false, disabled = false, ...props }) => {
     const [field, meta] = useField(name);
     const hasError = meta.touched && meta.error;
 

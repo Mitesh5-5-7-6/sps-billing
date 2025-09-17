@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, { FunctionComponent, useState } from 'react'
 import { Button } from '@/components/ui/button/Button'
 import DataTable, { Column } from '@/components/ui/DataTable'
 import { usePopup } from '@/components/ui/DialogProvider'
@@ -11,7 +11,7 @@ import { NumberInput } from '@/components/ui/fields/NumberInput'
 import { Input } from '@/components/ui/fields/TextInput'
 import { DeleteDialog } from '@/components/ui/DeleteDialog'
 import Notify from '@/utils/notify'
-import { useBill, useCreateProduct, useDeleteProduct, useMonthlyBill, useProducts, useUpdateProduct } from '@/hooks/useProduct'
+import { useCreateProduct, useDeleteProduct, useProducts, useUpdateProduct } from '@/hooks/useProduct'
 import * as yup from "yup";
 
 const productValidationSchema = yup.object({
@@ -19,7 +19,7 @@ const productValidationSchema = yup.object({
     price: yup.string().required()
 })
 
-const page = () => {
+export const ProductPage: FunctionComponent = () => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -187,5 +187,3 @@ const page = () => {
         </>
     )
 }
-
-export default page
