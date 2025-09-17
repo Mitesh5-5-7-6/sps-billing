@@ -19,7 +19,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, bill });
+    return NextResponse.json({ success: true, message: "Bill data fetch", data: bill });
   } catch (error) {
     return internalServerError(error);
   }
