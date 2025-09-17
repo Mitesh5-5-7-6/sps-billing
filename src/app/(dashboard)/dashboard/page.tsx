@@ -36,6 +36,60 @@ export default function InvoiceGenerator() {
     products?.data?.map((p: Product) => [p._id, p.name]) || []
   );
 
+  // const handleClick = async (
+  //   values: InvoiceValues,
+  //   setSubmitting: (isSubmitting: boolean) => void
+  // ) => {
+  //   try {
+  //     const itemsWithNames: InvoiceItem[] = values.items.map((item) => ({
+  //       ...item,
+  //       product_name: productNameMap[item.p_id] || "Unknown Product",
+  //     }));
+
+  //     const invoiceData = {
+  //       ...values,
+  //       items: itemsWithNames,
+  //     };
+
+
+  //     const savedBill: BillResponse = await createBill.mutateAsync(invoiceData);
+  //     const bill = savedBill.data;
+
+  //     console.log(savedBill.data, bill, bill.invoiceNo)
+
+  //     const downloadServerPDF = (
+  //       pdfBuffer: { type: string; data: number[] } | undefined,
+  //       fileName: string
+  //     ) => {
+  //       if (!pdfBuffer) {
+  //         console.error("No PDF buffer returned from server");
+  //         return;
+  //       }
+  //       const uint8Array = new Uint8Array(pdfBuffer.data);
+  //       const blob = new Blob([uint8Array], { type: "application/pdf" });
+  //       const url = window.URL.createObjectURL(blob);
+
+  //       const link = document.createElement("a");
+  //       link.href = url;
+  //       link.download = fileName || "invoice.pdf";
+  //       document.body.appendChild(link);
+  //       link.click();
+  //       document.body.removeChild(link);
+
+  //       window.URL.revokeObjectURL(url);
+  //     };
+
+  //     downloadServerPDF(bill?.pdf, `invoice-${bill.invoice}.pdf`);
+
+  //     return;
+
+  //   } catch (err) {
+  //     console.error("Error:", err);
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
+
   const handleClick = async (
     values: InvoiceValues,
     setSubmitting: (isSubmitting: boolean) => void
@@ -50,11 +104,10 @@ export default function InvoiceGenerator() {
         ...values,
         items: itemsWithNames,
       };
-
+      console.log("Invoice Data to be sent:", invoiceData);
       const savedBill: BillResponse = await createBill.mutateAsync(invoiceData);
-      const bill = savedBill.data;
 
-      console.log(bill.pdf);
+      console.log("Saved bill:", savedBill, "Invoice No:", savedBill.invoiceNo);
 
       const downloadServerPDF = (
         pdfBuffer: { type: string; data: number[] } | undefined,
@@ -78,7 +131,9 @@ export default function InvoiceGenerator() {
         window.URL.revokeObjectURL(url);
       };
 
-      downloadServerPDF(bill?.pdf, `invoice-${bill.invoice}.pdf`);
+      // Access properties directly from savedBill (no .data nesting)
+      downloadServerPDF(savedBill?.pdf, `invoice-${savedBill.invoiceNo}.pdf`);
+
       return;
 
     } catch (err) {
