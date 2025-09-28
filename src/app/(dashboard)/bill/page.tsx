@@ -16,14 +16,17 @@ const BillPage = () => {
     const router = useRouter();
     const [page, setPage] = useState(1);
     const [limit] = useState(10);
-    const [search, setSearch] = useState("");
-    const debouncedSearch = useDebounce(search, 500);
+    const [invoiceNo, setInvoiceNo] = useState("");
+    const [date, setDate] = useState("");
+    const debouncedInvoiceNo = useDebounce(invoiceNo, 1000);
+
     const { showPopup, hidePopup } = usePopup();
 
     const { data, isLoading, error } = useAllBills({
         page,
         limit,
-        invoiceNo: debouncedSearch || undefined,
+        invoiceNo: debouncedInvoiceNo,
+        date: date,
     });
     const deleteBill = useDeleteBill();
 
@@ -101,23 +104,23 @@ const BillPage = () => {
                 </Button>
             </div>
 
-            <div className="flex justify-between px-4 md:px-8 mb-6">
+            <div className="w-1/2 flex justify-between px-4 gap-4 md:px-8 mb-6">
                 <input
                     type="text"
                     placeholder="Search Invoice No."
-                    value={search}
+                    value={invoiceNo}
                     onChange={(e) => {
                         setPage(1);
-                        setSearch(e.target.value);
+                        setInvoiceNo(e.target.value);
                     }}
                     className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--focus-color)]"
                 />
                 <input
                     type="date"
-                    value={search}
+                    value={date}
                     onChange={(e) => {
                         setPage(1);
-                        setSearch(e.target.value);
+                        setDate(e.target.value);
                     }}
                     className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--focus-color)]"
                 />

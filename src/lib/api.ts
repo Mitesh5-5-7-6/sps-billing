@@ -60,7 +60,7 @@ export const api = {
         getAllBills: (params?: { page?: number; limit?: number; invoiceNo?: string; date?: string }) => {
             const query = new URLSearchParams(
                 Object.entries(params || {})
-                    .filter(([_, v]) => v !== undefined && v !== "")
+                    .filter(([v]) => v !== undefined && v !== "")
                     .map(([k, v]) => [k, String(v)])
             ).toString();
 

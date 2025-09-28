@@ -9,7 +9,7 @@ export const BILL_QUERY_KEYS = {
     bill: "bill",
 };
 
-export function useAllBills(params: { page: number; limit: number; invoiceNo?: string }) {
+export function useAllBills(params: { page: number; limit: number; invoiceNo?: string, date?: string }) {
     return useQuery<BillApiResponse>({
         queryKey: [BILL_QUERY_KEYS.bill, params],
         queryFn: () => api.bill.getAllBills(params),

@@ -14,7 +14,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
 
     try {
         await dbConnect();
-        const { id } = await context.params; // await params
+        const { id } = await context.params;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return badRequest("Invalid product ID");
         }
@@ -63,15 +63,15 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
 
     try {
         await dbConnect();
-        const { id } = await context.params; // await params
+        const { id } = await context.params;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return badRequest("Invalid product ID");
         }
 
-        const deleted = await productModel.findByIdAndDelete(id);
-        if (!deleted) return notFound("Product not found");
+        const deletedProduct = await productModel.findByIdAndDelete(id);
+        if (!deletedProduct) return notFound("Product not found");
 
-        return apiResponse(null, 'Product deleted successfully', 200);
+        return apiResponse(deletedProduct, 'Product deleted successfully', 200);
     } catch (error) {
         return internalServerError(error);
     }

@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     const tableWidth = right - left;
     const headerBlockTop = 20;
     const headerBlockHeight = 50;
-    const headerBottomY = headerBlockTop + headerBlockHeight + 60;
+    const headerBottomY = headerBlockTop + headerBlockHeight + 70;
     const footerBlockHeight = 130;
     const baseRowHeight = 22;
 
@@ -82,13 +82,13 @@ export async function POST(req: NextRequest) {
 
     const drawHeader = () => {
       // outer block
-      doc.rect(left - 10, headerBlockTop, tableWidth + 20, headerBlockHeight).stroke();
+      doc.rect(left - 10, headerBlockTop, tableWidth + 20, headerBlockHeight + 10).stroke();
 
       // logo box left
       const logoBoxX = left - 5;
-      const logoBoxY = headerBlockTop;
-      const logoBoxW = 50;
-      const logoBoxH = headerBlockHeight - 8;
+      const logoBoxY = headerBlockTop + 3;
+      const logoBoxW = 60;
+      const logoBoxH = headerBlockHeight;
 
       let logoUsedW = 0;
       if (logoBuffer) {
@@ -102,21 +102,28 @@ export async function POST(req: NextRequest) {
       const titleLeft = left + (logoUsedW ? 70 : 0);
       const titleWidth = tableWidth - (logoUsedW ? 120 : 0);
 
-      doc.font("Helvetica-Bold").fontSize(18)
+      const broadwayPath = path.join(process.cwd(), "public", "fonts", "Broadway.ttf");
+      if (fs.existsSync(broadwayPath)) {
+        doc.registerFont("Broadway", broadwayPath);
+        doc.font("Broadway");
+      } else {
+        doc.font("Helvetica-Bold");
+      }
+
+      doc.fillColor("#00B6D9").font("Broadway").fontSize(20)
         .text("SPS ANALYTICAL LABORATORY", titleLeft, headerBlockTop + 10, { align: "center", width: titleWidth });
 
-      doc.font("Helvetica").fontSize(10)
+      doc.fillColor("#000000").font("Broadway").fontSize(14)
         .text("509, D.C.-5, PANJOGHAR, ADIPUR(KUTCH) 370205", titleLeft, headerBlockTop + 35, { align: "center", width: titleWidth })
-      // .text("GSTIN: 24AABCS1234C1Z5", titleLeft, headerBlockTop + 50, { align: "center", width: titleWidth });
 
       // party block
-      const partyTop = headerBlockTop + 50;
-      doc.font("Helvetica-Bold").fontSize(11);
+      const partyTop = headerBlockTop + 60;
+      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(11);
       doc.text(`Invoice No.: ${invoice}`, left - 10, partyTop + 10);
       doc.text(`Date: ${formattedDate}`, right - 140, partyTop + 10, { width: 150, align: "right" });
-      doc.font("Helvetica-Bold").fontSize(11).text(`M/S. ${String(name || "").toUpperCase()}`, left - 10, partyTop + 25, { width: tableWidth });
+      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(11).text(`M/S. ${String(name || "").toUpperCase()}`, left - 10, partyTop + 25, { width: tableWidth });
       if (address) {
-        doc.font("Helvetica").fontSize(10).text(address, left - 10, partyTop + 40, { width: tableWidth });
+        doc.fillColor("#000000").font("Helvetica").fontSize(10).text(address, left - 10, partyTop + 40, { width: tableWidth });
       }
     };
 
@@ -149,8 +156,8 @@ export async function POST(req: NextRequest) {
       const colW = (tableWidth / 2) - 10;
       const rightColX = left + colW + 20;
 
-      doc.font("Helvetica-Bold").fontSize(10).text("RECEIVED", left, footerTop + 10);
-      doc.font("Helvetica").fontSize(10).text("For, SPS ANALYTICAL LABORATORY", right - 180, footerTop + 10, { width: 200 });
+      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10).text("RECEIVED", left, footerTop + 10);
+      doc.fillColor("#000000").font("Helvetica").fontSize(10).text("For, SPS ANALYTICAL LABORATORY", right - 180, footerTop + 10, { width: 200 });
 
       if (signatureBuffer) {
         doc.image(signatureBuffer, rightColX + colW - 150, footerTop - 40, { fit: [250, 45], width: 120 });
@@ -166,7 +173,7 @@ export async function POST(req: NextRequest) {
 
     // Rows
     let grandTotal = 0;
-    doc.font("Helvetica").fontSize(9);
+    doc.fillColor("#000000").font("Helvetica").fontSize(9);
 
     for (let i = 0; i < items.length; i += 1) {
       const it = items[i] || {};
@@ -192,18 +199,18 @@ export async function POST(req: NextRequest) {
 
       // draw row
       doc.rect(left, y, tableWidth, rowHeight).stroke("#000");
-      doc.font("Helvetica-Bold").fontSize(9)
+      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(9)
         .text(String(i + 1), colX.sr, y + 6, { width: colWidths.sr, align: "center" });
 
       // product name bold, description normal
-      doc.font("Helvetica-Bold").fontSize(9)
+      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(9)
         .text(nameText, colX.name, y + 4, { width: colWidths.name, align: "left" });
       if (descText) {
-        doc.font("Helvetica").fontSize(9)
+        doc.fillColor("#000000").font("Helvetica").fontSize(9)
           .text(descText, colX.name, y + 18, { width: colWidths.name, align: "left" });
       }
 
-      doc.font("Helvetica").fontSize(9);
+      doc.fillColor("#000000").font("Helvetica").fontSize(9);
       doc.text(qty.toString(), colX.qty, y + 6, { width: colWidths.qty, align: "center" });
       doc.text(`${rate.toFixed(2)}`, colX.rate, y + 6, { width: colWidths.rate, align: "center" });
       doc.text(`${total.toFixed(2)}`, colX.amt, y + 6, { width: colWidths.amt, align: "center" });

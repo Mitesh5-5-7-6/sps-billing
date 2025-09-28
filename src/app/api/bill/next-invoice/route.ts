@@ -5,7 +5,7 @@ import dbConnect from "@/lib/mongodb";
 import billModel from "@/models/bill.model";
 import { internalServerError } from "@/lib/apiResponse";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     const session = await checkAuth();
     if (session instanceof Response) return session;
 

@@ -1,32 +1,25 @@
 // src/app/api/bill/[id]/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import mongoose from 'mongoose';
+import { NextRequest } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import billModel from "@/models/bill.model";
 import { checkAuth } from "@/lib/checkAuth";
-import { internalServerError } from "@/lib/apiResponse";
+import { apiResponse, badRequest, internalServerError, notFound } from "@/lib/apiResponse";
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
     const session = await checkAuth();
     if (session instanceof Response) return session;
 
     try {
         await dbConnect();
-
-        const { id } = params;
-
-        const deletedBill = await billModel.findByIdAndDelete(id);
-
-        if (!deletedBill) {
-            return NextResponse.json(
-                { success: false, message: "Bill not found" },
-                { status: 404 }
-            );
+        const { id } = await context.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return badRequest("Invalid product ID");
         }
+        const deletedBill = await billModel.findByIdAndDelete(id);
+        if (!deletedBill) return notFound("Product not found");
 
-        return NextResponse.json({
-            success: true,
-            message: "Bill deleted successfully",
-        });
+        return apiResponse(deletedBill, 'Bill deleted successfully', 200);
     } catch (err) {
         return internalServerError(err);
     }
