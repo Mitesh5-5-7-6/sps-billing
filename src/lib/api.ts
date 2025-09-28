@@ -1,6 +1,7 @@
 import { getSession } from "next-auth/react";
 import { BillRequestBody, BillResponse, Product } from "@/types/product.type";
 import { ApiError } from "next/dist/server/api-utils";
+import { BillApiResponse } from "@/types/bill.type";
 
 const API_BASE_URL = (process.env.NEXT_API_BASE_URL || "").replace(/\/$/, "");
 
@@ -40,16 +41,36 @@ export const api = {
     },
     bill: {
         createBill: async (body: BillRequestBody): Promise<BillResponse> => {
-            const res = await apiRequest<{ success: boolean; message: string; data: BillResponse }>("/api/bill", {
+            const res = await apiRequest<{
+                success: boolean;
+                message: string;
+                invoiceNo: string;
+                pdfUrl: string;
+                data: BillResponse;
+            }>("/api/bill", {
                 method: "POST",
                 body: JSON.stringify(body),
             });
-            return res.data;
+            return {
+                ...res.data,
+                invoiceNo: res.invoiceNo,
+                pdfUrl: res.pdfUrl,
+            };
         },
-        getBillById: (id: string): Promise<BillResponse> =>
-            apiRequest(`/api/bill/${id}`),
-        getMonthlyBill: (month: string): Promise<BillResponse[]> =>
-            apiRequest(`/api/bill/monthly?month=${month}`),
+        getAllBills: (params?: { page?: number; limit?: number; invoiceNo?: string; date?: string }) => {
+            const query = new URLSearchParams(
+                Object.entries(params || {})
+                    .filter(([_, v]) => v !== undefined && v !== "")
+                    .map(([k, v]) => [k, String(v)])
+            ).toString();
+
+            return apiRequest<BillApiResponse>(`/api/bill/all${query ? `?${query}` : ""}`);
+        },
+        getBillById: (id: string): Promise<BillResponse> => apiRequest(`/api/bill/${id}`),
+        delete: (id: string): Promise<{ message: string }> =>
+            apiRequest(`/api/bill/${id}`, {
+                method: "DELETE",
+            }),
     },
     product: {
         getAll: (): Promise<{ data: Product[] }> => apiRequest("/api/product"),

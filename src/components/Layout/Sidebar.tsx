@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { LayoutDashboard, Building2, LogOut, LucideProps } from 'lucide-react';
+import { LayoutDashboard, Building2, LogOut, LucideProps, NotebookIcon } from 'lucide-react';
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { HiOutlineMenuAlt2, HiOutlineMenuAlt3 } from "react-icons/hi";
@@ -26,6 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
     const menuItems: MenuItem[] = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+        { id: 'bill', label: 'Bill', icon: NotebookIcon, path: '/bill' },
         { id: 'product', label: 'Product', icon: Building2, path: '/product' },
     ];
 

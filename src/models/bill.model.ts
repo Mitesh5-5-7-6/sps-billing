@@ -38,10 +38,11 @@ const BillSchema = new Schema<IBill>({
   items: [
     {
       p_id: String,
-      product_name: String,  // Make sure this matches your interface
+      product_name: String,
       price: Number,
       quantity: Number,
-      total_amount: Number,  // Make sure this matches your interface
+      total_amount: Number,
+      descripation: String,
     },
   ],
   pdf: { type: Buffer },

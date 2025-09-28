@@ -4,12 +4,7 @@ import type { Metadata } from "next";
 import { Sora } from "next/font/google";
 import SessionWrapper from "@/components/SessionWrapper";
 
-const sora = Sora({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-sora",
-  display: "swap",
-});
+const sora = Sora({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
   title: "SPS Billing Web",
@@ -26,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${sora.variable} font-sans`}>
+      <body className={sora.className}>
         <SessionWrapper>
           {children}
         </SessionWrapper>

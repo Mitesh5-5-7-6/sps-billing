@@ -18,6 +18,7 @@ export interface InvoiceItem {
     price: number;
     quantity: number;
     total_amount: number;
+    descripation: string;
 }
 
 export interface InvoiceValues {
@@ -34,6 +35,7 @@ export interface BillItem {
     price: number;
     quantity: number;
     total_amount: number;
+    descripation: string;
 }
 
 export interface BillRequestBody {
@@ -51,4 +53,5 @@ export interface BillResponse extends BillRequestBody {
     invoiceNo: string;
     createdAt: string;
     updatedAt: string;
+    pdfUrl?: string;
 }

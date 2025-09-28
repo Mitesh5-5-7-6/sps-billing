@@ -1,27 +1,33 @@
-// app/api/bill/[id]/route.ts
+// src/app/api/bill/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import Bill from "@/models/bill.model";
+import billModel from "@/models/bill.model";
+import { checkAuth } from "@/lib/checkAuth";
 import { internalServerError } from "@/lib/apiResponse";
 
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    await dbConnect();
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+    const session = await checkAuth();
+    if (session instanceof Response) return session;
 
-    const { id } = await context.params;
-    const bill = await Bill.findById(id);
-    if (!bill) {
-      return NextResponse.json(
-        { success: false, error: "Bill not found" },
-        { status: 404 }
-      );
+    try {
+        await dbConnect();
+
+        const { id } = params;
+
+        const deletedBill = await billModel.findByIdAndDelete(id);
+
+        if (!deletedBill) {
+            return NextResponse.json(
+                { success: false, message: "Bill not found" },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: "Bill deleted successfully",
+        });
+    } catch (err) {
+        return internalServerError(err);
     }
-
-    return NextResponse.json({ success: true, bill });
-  } catch (error) {
-    return internalServerError(error);
-  }
 }
