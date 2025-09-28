@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: "SPS billing web application for generating customer bills",
   icons: {
     icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 

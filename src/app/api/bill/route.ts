@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       let logoUsedW = 0;
       if (logoBuffer) {
         // keep aspect with fit
-        doc.image(logoBuffer, logoBoxX, logoBoxY, { fit: [logoBoxW, logoBoxH], align: "center", valign: "top" });
+        doc.image(logoBuffer, logoBoxX, logoBoxY, { fit: [logoBoxW, logoBoxH], align: "center", valign: "center" });
         // approximate used width to reserve horizontal offset
         logoUsedW = logoBoxW;
       }
