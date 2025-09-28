@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       let logoUsedW = 0;
       if (logoBuffer) {
         // keep aspect with fit
-        doc.image(logoBuffer, logoBoxX, logoBoxY, { fit: [logoBoxW, logoBoxH], align: "left", valign: "top" });
+        doc.image(logoBuffer, logoBoxX, logoBoxY, { fit: [logoBoxW, logoBoxH], align: "center", valign: "top" });
         // approximate used width to reserve horizontal offset
         logoUsedW = logoBoxW;
       }
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
         .text("SPS ANALYTICAL LABORATORY", titleLeft, headerBlockTop + 10, { align: "center", width: titleWidth });
 
       doc.fillColor("#000000").font("Broadway").fontSize(14)
-        .text("509, D.C.-5, PANJOGHAR, ADIPUR(KUTCH) 370205", titleLeft, headerBlockTop + 35, { align: "center", width: titleWidth })
+        .text("825, D.C.-5, PANJOGHAR, ADIPUR(KUTCH) 370205", titleLeft, headerBlockTop + 35, { align: "center", width: titleWidth })
 
       // party block
       const partyTop = headerBlockTop + 60;
@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
       const colW = (tableWidth / 2) - 10;
       const rightColX = left + colW + 20;
 
-      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10).text("RECEIVED", left, footerTop + 10);
+      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10).text("PENDING", left, footerTop + 10);
       doc.fillColor("#000000").font("Helvetica").fontSize(10).text("For, SPS ANALYTICAL LABORATORY", right - 180, footerTop + 10, { width: 200 });
 
       if (signatureBuffer) {

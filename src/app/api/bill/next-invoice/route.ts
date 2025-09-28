@@ -1,5 +1,5 @@
 // src/app/api/bill/next-invoice/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { checkAuth } from "@/lib/checkAuth";
 import dbConnect from "@/lib/mongodb";
 import billModel from "@/models/bill.model";
