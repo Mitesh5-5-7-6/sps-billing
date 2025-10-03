@@ -39,66 +39,72 @@ export async function POST(req: NextRequest) {
 
   try {
     await dbConnect();
-    const { invoice, date, name, address, items } = await req.json();
+    const { invoice, date, name, address, p_status, items } = await req.json();
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ success: false, message: "Items are required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Items are required" },
+        { status: 400 }
+      );
     }
 
-    const doc = new PDFDocument({ size: "A4", margin: 30 });
+    const paymentStatus = (p_status || "PENDING").toUpperCase() === "RECEIVED"
+      ? "RECEIVED"
+      : "PENDING";
+
+    const doc = new PDFDocument({ size: "A4", margin: 20 });
     const chunks: Buffer[] = [];
     doc.on("data", (c) => chunks.push(c));
-    const endPromise = new Promise<Buffer>((resolve) => doc.on("end", () => resolve(Buffer.concat(chunks))));
+    const endPromise = new Promise<Buffer>((resolve) =>
+      doc.on("end", () => resolve(Buffer.concat(chunks)))
+    );
 
     // Geometry
     const pageWidth = doc.page.width;
     const pageHeight = doc.page.height;
-    const left = 30;
-    const right = pageWidth - 30;
+    const left = 20;
+    const right = pageWidth - 20;
     const tableWidth = right - left;
     const headerBlockTop = 20;
     const headerBlockHeight = 50;
     const headerBottomY = headerBlockTop + headerBlockHeight + 70;
     const footerBlockHeight = 130;
-    const baseRowHeight = 22;
+    const baseRowHeight = 28; // more breathing space
 
     // Assets
     const logoPath = path.join(process.cwd(), "public", "logo.png");
     const signaturePath = path.join(process.cwd(), "public", "SPS_sign.png");
-
-    const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : undefined;
-    const signatureBuffer = fs.existsSync(signaturePath) ? fs.readFileSync(signaturePath) : undefined;
+    const logoBuffer = fs.existsSync(logoPath)
+      ? fs.readFileSync(logoPath)
+      : undefined;
+    const signatureBuffer = fs.existsSync(signaturePath)
+      ? fs.readFileSync(signaturePath)
+      : undefined;
 
     // Utilities
     const formattedDate = date.split("-").reverse().join("-");
-    const colWidths = { sr: 42, name: 240, qty: 80, rate: 80, amt: 100 };
+    const colWidths = { sr: 50, name: 300, qty: 60, rate: 70, amt: 80 };
     const colX = {
-      sr: left,
-      name: left + 42,
-      qty: left + 282,
-      rate: left + 362,
-      amt: left + 442,
+      sr: left - 5,
+      name: left + colWidths.sr,
+      qty: left + colWidths.sr + colWidths.name,
+      rate: left + colWidths.sr + colWidths.name + colWidths.qty,
+      amt: left + colWidths.sr + colWidths.name + colWidths.qty + colWidths.rate,
     };
 
     const drawHeader = () => {
-      // outer block
-      doc.rect(left - 10, headerBlockTop, tableWidth + 20, headerBlockHeight + 10).stroke();
-
-      // logo box left
-      const logoBoxX = left - 5;
-      const logoBoxY = headerBlockTop + 3;
-      const logoBoxW = 60;
-      const logoBoxH = headerBlockHeight;
+      doc.rect(left - 5, headerBlockTop, tableWidth + 10, headerBlockHeight + 10).stroke();
 
       let logoUsedW = 0;
       if (logoBuffer) {
-        // keep aspect with fit
-        doc.image(logoBuffer, logoBoxX, logoBoxY, { fit: [logoBoxW, logoBoxH], align: "center", valign: "center" });
-        // approximate used width to reserve horizontal offset
-        logoUsedW = logoBoxW;
+        doc.image(logoBuffer, left, headerBlockTop + 3, {
+          fit: [60, headerBlockHeight],
+          align: "center",
+          valign: "center",
+        });
+        logoUsedW = 60;
       }
 
-      // title block centered relative to full width, but account for left logo
       const titleLeft = left + (logoUsedW ? 70 : 0);
       const titleWidth = tableWidth - (logoUsedW ? 120 : 0);
 
@@ -110,32 +116,39 @@ export async function POST(req: NextRequest) {
         doc.font("Helvetica-Bold");
       }
 
-      doc.fillColor("#00B6D9").font("Broadway").fontSize(20)
-        .text("SPS ANALYTICAL LABORATORY", titleLeft, headerBlockTop + 10, { align: "center", width: titleWidth });
+      doc.fillColor("#00B6D9").fontSize(20).text(
+        "SPS ANALYTICAL LABORATORY",
+        titleLeft,
+        headerBlockTop + 10,
+        { align: "center", width: titleWidth }
+      );
 
-      doc.fillColor("#000000").font("Broadway").fontSize(14)
-        .text("825, D.C.-5, PANJOGHAR, ADIPUR(KUTCH) 370205", titleLeft, headerBlockTop + 35, { align: "center", width: titleWidth })
+      doc.fillColor("#000000").fontSize(14).text(
+        "825, D.C.-5, PANJOGHAR, ADIPUR(KUTCH) 370205",
+        titleLeft,
+        headerBlockTop + 35,
+        { align: "center", width: titleWidth }
+      );
 
-      // party block
       const partyTop = headerBlockTop + 60;
       doc.fillColor("#000000").font("Helvetica-Bold").fontSize(11);
-      doc.text(`Invoice No.: ${invoice}`, left - 10, partyTop + 10);
+      doc.text(`Invoice No.: ${invoice}`, left, partyTop + 10);
       doc.text(`Date: ${formattedDate}`, right - 140, partyTop + 10, { width: 150, align: "right" });
-      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(11).text(`M/S. ${String(name || "").toUpperCase()}`, left - 10, partyTop + 25, { width: tableWidth });
+      doc.text(`M/S. ${String(name || "").toUpperCase()}`, left, partyTop + 25, { width: tableWidth });
       if (address) {
-        doc.fillColor("#000000").font("Helvetica").fontSize(10).text(address, left - 10, partyTop + 40, { width: tableWidth });
+        doc.font("Helvetica").fontSize(10).text(address, left, partyTop + 40, { width: tableWidth });
       }
     };
 
     const drawTableHeader = (y: number) => {
       doc.save();
       doc.rect(left, y, tableWidth, baseRowHeight).fillAndStroke("#f0f0f0", "#000");
-      doc.fillColor("#000").font("Helvetica-Bold").fontSize(9);
-      doc.text("Sr.No.", colX.sr, y + 6, { width: colWidths.sr, align: "center" });
-      doc.text("Particulars", colX.name, y + 6, { width: colWidths.name, align: "left" });
-      doc.text("Qty", colX.qty, y + 6, { width: colWidths.qty, align: "center" });
-      doc.text("Rate", colX.rate, y + 6, { width: colWidths.rate, align: "center" });
-      doc.text("Amount (Rs)", colX.amt, y + 6, { width: colWidths.amt, align: "center" });
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(10);
+      doc.text("Sr.No.", colX.sr, y + 8, { width: colWidths.sr, align: "center" });
+      doc.text("Particulars", colX.name, y + 8, { width: colWidths.name, align: "left" });
+      doc.text("Qty", colX.qty, y + 8, { width: colWidths.qty, align: "center" });
+      doc.text("Rate", colX.rate, y + 8, { width: colWidths.rate, align: "center" });
+      doc.text("Amount (Rs)", colX.amt, y + 8, { width: colWidths.amt, align: "center" });
       doc.restore();
     };
 
@@ -150,32 +163,34 @@ export async function POST(req: NextRequest) {
     };
 
     const drawFooter = (yStart: number) => {
-      const footerTop = yStart + 20; // push just below table
+      const footerTop = yStart + 20;
       doc.moveTo(left, footerTop).lineTo(right, footerTop).stroke("#ccc");
 
-      const colW = (tableWidth / 2) - 10;
-      const rightColX = left + colW + 20;
+      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10)
+        .text(paymentStatus, left, footerTop + 10);
 
-      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10).text("PENDING", left, footerTop + 10);
-      doc.fillColor("#000000").font("Helvetica").fontSize(10).text("For, SPS ANALYTICAL LABORATORY", right - 180, footerTop + 10, { width: 200 });
+      // doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10).text("PENDING", left, footerTop + 10);
+      doc.fillColor("#000000").font("Helvetica").fontSize(10).text(
+        "For, SPS ANALYTICAL LABORATORY",
+        right - 200,
+        footerTop + 10,
+        { width: 200 }
+      );
 
       if (signatureBuffer) {
-        doc.image(signatureBuffer, rightColX + colW - 150, footerTop - 40, { fit: [250, 45], width: 120 });
+        doc.image(signatureBuffer, right - 150, footerTop - 40, { fit: [250, 45], width: 120 });
       }
     };
 
     drawHeader();
 
-    // Render header and table header on first page
     let y = headerBottomY;
     drawTableHeader(y);
     y += baseRowHeight;
 
     // Rows
     let grandTotal = 0;
-    doc.fillColor("#000000").font("Helvetica").fontSize(9);
-
-    for (let i = 0; i < items.length; i += 1) {
+    for (let i = 0; i < items.length; i++) {
       const it = items[i] || {};
       const nameText = String(it.product_name || "UNKNOWN PRODUCT").toUpperCase();
       const descText = String(it.descripation || "").toUpperCase();
@@ -184,36 +199,35 @@ export async function POST(req: NextRequest) {
       const total = Number(it.total_amount ?? rate * qty);
       grandTotal += total;
 
-      const particularsText = descText
-        ? `${nameText}\n${descText}`
-        : nameText;
+      const nameHeight = doc.heightOfString(nameText, { width: colWidths.name });
+      const descHeight = descText ? doc.heightOfString(descText, { width: colWidths.name }) : 0;
+      const particularsHeight = nameHeight + (descText ? descHeight + 10 : 0);
+      const rowHeight = Math.max(baseRowHeight, particularsHeight + 20);
 
-      // compute row height from product+desc text
-      const particularsHeight = Math.max(
-        12,
-        doc.heightOfString(particularsText, { width: colWidths.name })
-      );
-      const rowHeight = Math.max(baseRowHeight, Math.ceil(particularsHeight / 12) * 14 + 6);
+      y = ensureSpace(rowHeight + 10, y);
 
-      y = ensureSpace(rowHeight + baseRowHeight + 10, y);
-
-      // draw row
       doc.rect(left, y, tableWidth, rowHeight).stroke("#000");
-      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(9)
-        .text(String(i + 1), colX.sr, y + 6, { width: colWidths.sr, align: "center" });
 
-      // product name bold, description normal
       doc.fillColor("#000000").font("Helvetica-Bold").fontSize(9)
-        .text(nameText, colX.name, y + 4, { width: colWidths.name, align: "left" });
+        .text(String(i + 1), colX.sr, y + 10, { width: colWidths.sr, align: "center" });
+
+      let textY = y + 8;
+      doc.font("Helvetica-Bold").fontSize(9).text(nameText, colX.name, textY, {
+        width: colWidths.name,
+        align: "left",
+      });
+      textY += nameHeight + 5;
       if (descText) {
-        doc.fillColor("#000000").font("Helvetica").fontSize(9)
-          .text(descText, colX.name, y + 18, { width: colWidths.name, align: "left" });
+        doc.font("Helvetica").fontSize(9).text(descText, colX.name, textY, {
+          width: colWidths.name,
+          align: "left",
+        });
       }
 
-      doc.fillColor("#000000").font("Helvetica").fontSize(9);
-      doc.text(qty.toString(), colX.qty, y + 6, { width: colWidths.qty, align: "center" });
-      doc.text(`${rate.toFixed(2)}`, colX.rate, y + 6, { width: colWidths.rate, align: "center" });
-      doc.text(`${total.toFixed(2)}`, colX.amt, y + 6, { width: colWidths.amt, align: "center" });
+      doc.font("Helvetica").fontSize(9);
+      doc.text(qty.toString(), colX.qty, y + 10, { width: colWidths.qty, align: "center" });
+      doc.text(rate.toFixed(2), colX.rate, y + 10, { width: colWidths.rate, align: "center" });
+      doc.text(total.toFixed(2), colX.amt, y + 10, { width: colWidths.amt, align: "center" });
 
       y += rowHeight;
     }
@@ -224,9 +238,9 @@ export async function POST(req: NextRequest) {
     doc.save();
     doc.rect(left, y, tableWidth, baseRowHeight).fillAndStroke("#f0f0f0", "#000");
     doc.fillColor("#000").font("Helvetica-Bold").fontSize(10);
-    doc.text(`In words: ${words}`, left + 10, y + 6, { width: tableWidth - 180 });
-    doc.text("TOTAL", colX.rate, y + 6, { width: colWidths.rate, align: "right" });
-    doc.text(`${grandTotal.toFixed(2)}`, colX.amt, y + 6, { width: colWidths.amt, align: "center" });
+    doc.text(`In words: ${words}`, left + 10, y + 8, { width: tableWidth - 220 });
+    doc.text("TOTAL", colX.rate, y + 8, { width: colWidths.rate, align: "right" });
+    doc.text(grandTotal.toFixed(2), colX.amt, y + 8, { width: colWidths.amt, align: "center" });
     doc.restore();
     y += baseRowHeight + 8;
 
@@ -240,6 +254,7 @@ export async function POST(req: NextRequest) {
       date,
       clientName: name,
       clientAddress: address,
+      payment_status: paymentStatus,
       items,
       totalAmount: grandTotal,
       pdf: pdfBuffer,
@@ -253,6 +268,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error("Error generating bill:", err);
-    return NextResponse.json({ success: false, message: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

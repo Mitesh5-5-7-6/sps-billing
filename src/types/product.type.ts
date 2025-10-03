@@ -26,6 +26,7 @@ export interface InvoiceValues {
     date: string;
     name: string;
     address: string;
+    p_status: string,
     items: InvoiceItem[];
 }
 

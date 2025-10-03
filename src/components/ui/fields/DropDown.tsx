@@ -37,7 +37,7 @@ export function DropDown<T extends Record<string, string | number>>({
     );
 
     return (
-        <div className={`flex flex-col ${className}`}>
+        <div className={`flex flex-col mb-4 ${className}`}>
             <label
                 htmlFor={name}
                 className="text-sm block mb-1 font-light md:font-medium text-[var(--primary-text)]"
