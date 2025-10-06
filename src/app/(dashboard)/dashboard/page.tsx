@@ -117,7 +117,7 @@ export default function InvoiceGenerator() {
                 date: new Date().toISOString().split("T")[0],
                 name: "",
                 address: "",
-                p_status: "",
+                p_status: "PENDING",
                 items: [
                   {
                     p_id: "",

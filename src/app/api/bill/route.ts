@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     const headerBlockHeight = 50;
     const headerBottomY = headerBlockTop + headerBlockHeight + 70;
     const footerBlockHeight = 130;
-    const baseRowHeight = 28; // more breathing space
+    const baseRowHeight = 30;
 
     // Assets
     const logoPath = path.join(process.cwd(), "public", "logo.png");
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     const formattedDate = date.split("-").reverse().join("-");
     const colWidths = { sr: 50, name: 300, qty: 60, rate: 70, amt: 80 };
     const colX = {
-      sr: left - 5,
+      sr: left,
       name: left + colWidths.sr,
       qty: left + colWidths.sr + colWidths.name,
       rate: left + colWidths.sr + colWidths.name + colWidths.qty,
@@ -93,11 +93,11 @@ export async function POST(req: NextRequest) {
     };
 
     const drawHeader = () => {
-      doc.rect(left - 5, headerBlockTop, tableWidth + 10, headerBlockHeight + 10).stroke();
+      doc.rect(left, headerBlockTop, tableWidth, headerBlockHeight + 10).stroke();
 
       let logoUsedW = 0;
       if (logoBuffer) {
-        doc.image(logoBuffer, left, headerBlockTop + 3, {
+        doc.image(logoBuffer, left + 5, headerBlockTop + 5, {
           fit: [60, headerBlockHeight],
           align: "center",
           valign: "center",
@@ -105,8 +105,8 @@ export async function POST(req: NextRequest) {
         logoUsedW = 60;
       }
 
-      const titleLeft = left + (logoUsedW ? 70 : 0);
-      const titleWidth = tableWidth - (logoUsedW ? 120 : 0);
+      const titleLeft = left + (logoUsedW ? 75 : 5);
+      const titleWidth = tableWidth - (logoUsedW ? 85 : 10);
 
       const broadwayPath = path.join(process.cwd(), "public", "fonts", "Broadway.ttf");
       if (fs.existsSync(broadwayPath)) {
@@ -132,11 +132,11 @@ export async function POST(req: NextRequest) {
 
       const partyTop = headerBlockTop + 60;
       doc.fillColor("#000000").font("Helvetica-Bold").fontSize(11);
-      doc.text(`Invoice No.: ${invoice}`, left, partyTop + 10);
-      doc.text(`Date: ${formattedDate}`, right - 140, partyTop + 10, { width: 150, align: "right" });
-      doc.text(`M/S. ${String(name || "").toUpperCase()}`, left, partyTop + 25, { width: tableWidth });
+      doc.text(`Invoice No.: ${invoice}`, left + 5, partyTop + 10);
+      doc.text(`Date: ${formattedDate}`, right - 130, partyTop + 10, { width: 130, align: "right" });
+      doc.text(`M/S. ${String(name || "").toUpperCase()}`, left + 5, partyTop + 25, { width: tableWidth - 10 });
       if (address) {
-        doc.font("Helvetica").fontSize(10).text(address, left, partyTop + 40, { width: tableWidth });
+        doc.font("Helvetica").fontSize(10).text(address, left + 5, partyTop + 40, { width: tableWidth - 10 });
       }
     };
 
@@ -163,18 +163,17 @@ export async function POST(req: NextRequest) {
     };
 
     const drawFooter = (yStart: number) => {
-      const footerTop = yStart + 20;
+      const footerTop = yStart + 40;
       doc.moveTo(left, footerTop).lineTo(right, footerTop).stroke("#ccc");
 
       doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10)
-        .text(paymentStatus, left, footerTop + 10);
+        .text(paymentStatus, left + 5, footerTop + 10);
 
-      // doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10).text("PENDING", left, footerTop + 10);
       doc.fillColor("#000000").font("Helvetica").fontSize(10).text(
         "For, SPS ANALYTICAL LABORATORY",
         right - 200,
         footerTop + 10,
-        { width: 200 }
+        { width: 200, align: "left" }
       );
 
       if (signatureBuffer) {
@@ -216,7 +215,7 @@ export async function POST(req: NextRequest) {
         width: colWidths.name,
         align: "left",
       });
-      textY += nameHeight + 5;
+      textY += nameHeight;
       if (descText) {
         doc.font("Helvetica").fontSize(9).text(descText, colX.name, textY, {
           width: colWidths.name,
@@ -238,9 +237,9 @@ export async function POST(req: NextRequest) {
     doc.save();
     doc.rect(left, y, tableWidth, baseRowHeight).fillAndStroke("#f0f0f0", "#000");
     doc.fillColor("#000").font("Helvetica-Bold").fontSize(10);
-    doc.text(`In words: ${words}`, left + 10, y + 8, { width: tableWidth - 220 });
-    doc.text("TOTAL", colX.rate, y + 8, { width: colWidths.rate, align: "right" });
-    doc.text(grandTotal.toFixed(2), colX.amt, y + 8, { width: colWidths.amt, align: "center" });
+    doc.text(`In words: ${words}`, left + 10, y + 10, { width: tableWidth - 220 });
+    doc.text("TOTAL", colX.rate + 5, y + 10, { width: colWidths.rate - 10, align: "right" });
+    doc.text(grandTotal.toFixed(2), colX.amt + 5, y + 10, { width: colWidths.amt - 10, align: "center" });
     doc.restore();
     y += baseRowHeight + 8;
 
