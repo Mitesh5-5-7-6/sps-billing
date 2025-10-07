@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       doc.on("end", () => resolve(Buffer.concat(chunks)))
     );
 
-    // Geometry
+    // Geometry - ENHANCED SPACING
     const pageWidth = doc.page.width;
     const pageHeight = doc.page.height;
     const left = 20;
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     const headerBlockHeight = 50;
     const headerBottomY = headerBlockTop + headerBlockHeight + 70;
     const footerBlockHeight = 130;
-    const baseRowHeight = 30;
+    const baseRowHeight = 35; // Increased from 30
 
     // Assets
     const logoPath = path.join(process.cwd(), "public", "logo.png");
@@ -83,7 +83,16 @@ export async function POST(req: NextRequest) {
 
     // Utilities
     const formattedDate = date.split("-").reverse().join("-");
-    const colWidths = { sr: 50, name: 300, qty: 60, rate: 70, amt: 80 };
+
+    // ENHANCED COLUMN WIDTHS - More space for product name/description
+    const colWidths = {
+      sr: 40,      // Reduced from 50
+      name: 340,   // Increased from 300
+      qty: 50,     // Reduced from 60
+      rate: 50,    // Reduced from 70
+      amt: 70      // Reduced from 80
+    };
+
     const colX = {
       sr: left,
       name: left + colWidths.sr,
@@ -144,11 +153,11 @@ export async function POST(req: NextRequest) {
       doc.save();
       doc.rect(left, y, tableWidth, baseRowHeight).fillAndStroke("#f0f0f0", "#000");
       doc.fillColor("#000").font("Helvetica-Bold").fontSize(10);
-      doc.text("Sr.No.", colX.sr, y + 8, { width: colWidths.sr, align: "center" });
-      doc.text("Particulars", colX.name, y + 8, { width: colWidths.name, align: "left" });
-      doc.text("Qty", colX.qty, y + 8, { width: colWidths.qty, align: "center" });
-      doc.text("Rate", colX.rate, y + 8, { width: colWidths.rate, align: "center" });
-      doc.text("Amount (Rs)", colX.amt, y + 8, { width: colWidths.amt, align: "center" });
+      doc.text("Sr.No.", colX.sr, y + 12, { width: colWidths.sr, align: "center" });
+      doc.text("Particulars", colX.name + 5, y + 12, { width: colWidths.name, align: "left" });
+      doc.text("Qty", colX.qty, y + 12, { width: colWidths.qty, align: "center" });
+      doc.text("Rate", colX.rate, y + 12, { width: colWidths.rate, align: "center" });
+      doc.text("Amount (Rs)", colX.amt, y + 12, { width: colWidths.amt, align: "center" });
       doc.restore();
     };
 
@@ -187,7 +196,7 @@ export async function POST(req: NextRequest) {
     drawTableHeader(y);
     y += baseRowHeight;
 
-    // Rows
+    // Rows - ENHANCED TEXT RENDERING
     let grandTotal = 0;
     for (let i = 0; i < items.length; i++) {
       const it = items[i] || {};
@@ -198,35 +207,54 @@ export async function POST(req: NextRequest) {
       const total = Number(it.total_amount ?? rate * qty);
       grandTotal += total;
 
-      const nameHeight = doc.heightOfString(nameText, { width: colWidths.name });
-      const descHeight = descText ? doc.heightOfString(descText, { width: colWidths.name }) : 0;
-      const particularsHeight = nameHeight + (descText ? descHeight + 10 : 0);
-      const rowHeight = Math.max(baseRowHeight, particularsHeight + 20);
+      // Calculate heights with better spacing
+      const nameHeight = doc.heightOfString(nameText, {
+        width: colWidths.name - 10,
+        lineGap: 2
+      });
+      const descHeight = descText ? doc.heightOfString(descText, {
+        width: colWidths.name - 10,
+        lineGap: 2
+      }) : 0;
+
+      // Add more padding between name and description
+      const particularsHeight = nameHeight + (descText ? descHeight + 15 : 0);
+      const rowHeight = Math.max(baseRowHeight, particularsHeight + 25); // Increased padding
 
       y = ensureSpace(rowHeight + 10, y);
 
       doc.rect(left, y, tableWidth, rowHeight).stroke("#000");
 
+      // Serial number
       doc.fillColor("#000000").font("Helvetica-Bold").fontSize(9)
-        .text(String(i + 1), colX.sr, y + 10, { width: colWidths.sr, align: "center" });
+        .text(String(i + 1), colX.sr, y + 12, { width: colWidths.sr, align: "center" });
 
-      let textY = y + 8;
-      doc.font("Helvetica-Bold").fontSize(9).text(nameText, colX.name, textY, {
-        width: colWidths.name,
+      // Product name and description with better spacing
+      let textY = y + 12;
+
+      // Product Name - Bold and slightly larger
+      doc.font("Helvetica-Bold").fontSize(10).text(nameText, colX.name + 5, textY, {
+        width: colWidths.name - 10,
         align: "left",
+        lineGap: 2
       });
-      textY += nameHeight;
+      textY += nameHeight + 8; // Extra space after product name
+
       if (descText) {
-        doc.font("Helvetica").fontSize(9).text(descText, colX.name, textY, {
-          width: colWidths.name,
+        doc.font("Helvetica").fontSize(9).fillColor("#333333").text(descText, colX.name + 5, textY - 8, {
+          width: colWidths.name - 10,
           align: "left",
+          lineGap: 2
         });
       }
 
-      doc.font("Helvetica").fontSize(9);
-      doc.text(qty.toString(), colX.qty, y + 10, { width: colWidths.qty, align: "center" });
-      doc.text(rate.toFixed(2), colX.rate, y + 10, { width: colWidths.rate, align: "center" });
-      doc.text(total.toFixed(2), colX.amt, y + 10, { width: colWidths.amt, align: "center" });
+      // Other columns - vertically centered
+      // const centerY = y + (rowHeight / 2) - 5;
+      const centerY = y + (rowHeight / 2) - 8; // Adjusted for better vertical centering
+      doc.fillColor("#000000").font("Helvetica").fontSize(9);
+      doc.text(qty.toString(), colX.qty, centerY, { width: colWidths.qty, align: "center" });
+      doc.text(rate.toFixed(2), colX.rate, centerY, { width: colWidths.rate, align: "center" });
+      doc.text(total.toFixed(2), colX.amt, centerY, { width: colWidths.amt, align: "center" });
 
       y += rowHeight;
     }
@@ -237,9 +265,9 @@ export async function POST(req: NextRequest) {
     doc.save();
     doc.rect(left, y, tableWidth, baseRowHeight).fillAndStroke("#f0f0f0", "#000");
     doc.fillColor("#000").font("Helvetica-Bold").fontSize(10);
-    doc.text(`In words: ${words}`, left + 10, y + 10, { width: tableWidth - 220 });
-    doc.text("TOTAL", colX.rate + 5, y + 10, { width: colWidths.rate - 10, align: "right" });
-    doc.text(grandTotal.toFixed(2), colX.amt + 5, y + 10, { width: colWidths.amt - 10, align: "center" });
+    doc.text(`In words: ${words}`, left + 10, y + 12, { width: tableWidth - 220 });
+    doc.text("TOTAL", colX.rate + 5, y + 12, { width: colWidths.rate - 10, align: "right" });
+    doc.text(grandTotal.toFixed(2), colX.amt + 5, y + 12, { width: colWidths.amt - 10, align: "center" });
     doc.restore();
     y += baseRowHeight + 8;
 
