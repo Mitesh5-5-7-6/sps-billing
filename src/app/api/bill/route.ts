@@ -48,9 +48,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const paymentStatus = (p_status || "PENDING").toUpperCase() === "RECEIVED"
-      ? "RECEIVED"
-      : "PENDING";
+    const paymentStatus =
+      (p_status || "PENDING").toUpperCase() === "RECEIVED"
+        ? "RECEIVED"
+        : "PENDING";
 
     const doc = new PDFDocument({ size: "A4", margin: 20 });
     const chunks: Buffer[] = [];
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       doc.on("end", () => resolve(Buffer.concat(chunks)))
     );
 
-    // Geometry - ENHANCED SPACING
+    // Geometry
     const pageWidth = doc.page.width;
     const pageHeight = doc.page.height;
     const left = 20;
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
     const headerBlockHeight = 50;
     const headerBottomY = headerBlockTop + headerBlockHeight + 70;
     const footerBlockHeight = 130;
-    const baseRowHeight = 35; // Increased from 30
+    const baseRowHeight = 35;
 
     // Assets
     const logoPath = path.join(process.cwd(), "public", "logo.png");
@@ -81,16 +82,16 @@ export async function POST(req: NextRequest) {
       ? fs.readFileSync(signaturePath)
       : undefined;
 
-    // Utilities
+    // Date format
     const formattedDate = date.split("-").reverse().join("-");
 
-    // ENHANCED COLUMN WIDTHS - More space for product name/description
+    // Column widths
     const colWidths = {
-      sr: 40,      // Reduced from 50
-      name: 340,   // Increased from 300
-      qty: 50,     // Reduced from 60
-      rate: 50,    // Reduced from 70
-      amt: 70      // Reduced from 80
+      sr: 40,
+      name: 340,
+      qty: 50,
+      rate: 50,
+      amt: 70,
     };
 
     const colX = {
@@ -98,9 +99,11 @@ export async function POST(req: NextRequest) {
       name: left + colWidths.sr,
       qty: left + colWidths.sr + colWidths.name,
       rate: left + colWidths.sr + colWidths.name + colWidths.qty,
-      amt: left + colWidths.sr + colWidths.name + colWidths.qty + colWidths.rate,
+      amt:
+        left + colWidths.sr + colWidths.name + colWidths.qty + colWidths.rate,
     };
 
+    // Header
     const drawHeader = () => {
       doc.rect(left, headerBlockTop, tableWidth, headerBlockHeight + 10).stroke();
 
@@ -108,8 +111,6 @@ export async function POST(req: NextRequest) {
       if (logoBuffer) {
         doc.image(logoBuffer, left + 5, headerBlockTop + 5, {
           fit: [60, headerBlockHeight],
-          align: "center",
-          valign: "center",
         });
         logoUsedW = 60;
       }
@@ -117,7 +118,12 @@ export async function POST(req: NextRequest) {
       const titleLeft = left + (logoUsedW ? 75 : 5);
       const titleWidth = tableWidth - (logoUsedW ? 85 : 10);
 
-      const broadwayPath = path.join(process.cwd(), "public", "fonts", "Broadway.ttf");
+      const broadwayPath = path.join(
+        process.cwd(),
+        "public",
+        "fonts",
+        "Broadway.ttf"
+      );
       if (fs.existsSync(broadwayPath)) {
         doc.registerFont("Broadway", broadwayPath);
         doc.font("Broadway");
@@ -142,10 +148,17 @@ export async function POST(req: NextRequest) {
       const partyTop = headerBlockTop + 60;
       doc.fillColor("#000000").font("Helvetica-Bold").fontSize(11);
       doc.text(`Invoice No.: ${invoice}`, left + 5, partyTop + 10);
-      doc.text(`Date: ${formattedDate}`, right - 130, partyTop + 10, { width: 130, align: "right" });
-      doc.text(`M/S. ${String(name || "").toUpperCase()}`, left + 5, partyTop + 25, { width: tableWidth - 10 });
+      doc.text(`Date: ${formattedDate}`, right - 130, partyTop + 10, {
+        width: 130,
+        align: "right",
+      });
+      doc.text(`M/S. ${String(name || "").toUpperCase()}`, left + 5, partyTop + 25, {
+        width: tableWidth - 10,
+      });
       if (address) {
-        doc.font("Helvetica").fontSize(10).text(address, left + 5, partyTop + 40, { width: tableWidth - 10 });
+        doc.font("Helvetica").fontSize(10).text(address, left + 5, partyTop + 40, {
+          width: tableWidth - 10,
+        });
       }
     };
 
@@ -154,10 +167,16 @@ export async function POST(req: NextRequest) {
       doc.rect(left, y, tableWidth, baseRowHeight).fillAndStroke("#f0f0f0", "#000");
       doc.fillColor("#000").font("Helvetica-Bold").fontSize(10);
       doc.text("Sr.No.", colX.sr, y + 12, { width: colWidths.sr, align: "center" });
-      doc.text("Particulars", colX.name + 5, y + 12, { width: colWidths.name, align: "left" });
+      doc.text("Particulars", colX.name + 5, y + 12, {
+        width: colWidths.name,
+        align: "left",
+      });
       doc.text("Qty", colX.qty, y + 12, { width: colWidths.qty, align: "center" });
       doc.text("Rate", colX.rate, y + 12, { width: colWidths.rate, align: "center" });
-      doc.text("Amount (Rs)", colX.amt, y + 12, { width: colWidths.amt, align: "center" });
+      doc.text("Amount (Rs)", colX.amt, y + 12, {
+        width: colWidths.amt,
+        align: "center",
+      });
       doc.restore();
     };
 
@@ -175,8 +194,11 @@ export async function POST(req: NextRequest) {
       const footerTop = yStart + 40;
       doc.moveTo(left, footerTop).lineTo(right, footerTop).stroke("#ccc");
 
-      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10)
-        .text(paymentStatus, left + 5, footerTop + 10);
+      doc.fillColor("#000000").font("Helvetica-Bold").fontSize(10).text(
+        paymentStatus,
+        left + 5,
+        footerTop + 10
+      );
 
       doc.fillColor("#000000").font("Helvetica").fontSize(10).text(
         "For, SPS ANALYTICAL LABORATORY",
@@ -186,71 +208,85 @@ export async function POST(req: NextRequest) {
       );
 
       if (signatureBuffer) {
-        doc.image(signatureBuffer, right - 150, footerTop - 40, { fit: [250, 45], width: 120 });
+        doc.image(signatureBuffer, right - 150, footerTop - 40, {
+          fit: [250, 45],
+          width: 120,
+        });
       }
     };
 
+    // DRAWING BEGINS
     drawHeader();
-
     let y = headerBottomY;
     drawTableHeader(y);
     y += baseRowHeight;
 
-    // Rows - ENHANCED TEXT RENDERING
     let grandTotal = 0;
+
+    // ------------------------
+    // FLEXIBLE PRODUCT SECTION
+    // ------------------------
     for (let i = 0; i < items.length; i++) {
       const it = items[i] || {};
+
       const nameText = String(it.product_name || "UNKNOWN PRODUCT").toUpperCase();
-      const descText = String(it.descripation || "").toUpperCase();
+
+      const descArray: string[] = Array.isArray(it.description)
+        ? (it.description as string[]).map((d) => String(d).toUpperCase())
+        : [String(it.descripation || "").toUpperCase()].filter((d) => d.length > 0);
+
       const qty = Number(it.quantity || 0);
       const rate = Number(it.price || 0);
       const total = Number(it.total_amount ?? rate * qty);
       grandTotal += total;
 
-      // Calculate heights with better spacing
-      const nameHeight = doc.heightOfString(nameText, {
-        width: colWidths.name - 10,
-        lineGap: 2
+      // Calculate dynamic row height
+      doc.font("Helvetica-Bold").fontSize(10);
+      let textHeight = doc.heightOfString(nameText, { width: colWidths.name - 10 });
+
+      doc.font("Helvetica").fontSize(9);
+      descArray.forEach((descLine) => {
+        textHeight += doc.heightOfString(descLine, { width: colWidths.name - 10 });
       });
-      const descHeight = descText ? doc.heightOfString(descText, {
-        width: colWidths.name - 10,
-        lineGap: 2
-      }) : 0;
 
-      // Add more padding between name and description
-      const particularsHeight = nameHeight + (descText ? descHeight + 15 : 0);
-      const rowHeight = Math.max(baseRowHeight, particularsHeight + 25); // Increased padding
-
+      const rowHeight = Math.max(baseRowHeight, textHeight + 25);
       y = ensureSpace(rowHeight + 10, y);
 
+      // Draw border
       doc.rect(left, y, tableWidth, rowHeight).stroke("#000");
 
-      // Serial number
+      // Sr.No.
       doc.fillColor("#000000").font("Helvetica-Bold").fontSize(9)
         .text(String(i + 1), colX.sr, y + 12, { width: colWidths.sr, align: "center" });
 
-      // Product name and description with better spacing
+      // Product Name + Description
       let textY = y + 12;
-
-      // Product Name - Bold and slightly larger
-      doc.font("Helvetica-Bold").fontSize(10).text(nameText, colX.name + 5, textY, {
+      doc.font("Helvetica-Bold").fontSize(10).fillColor("#000").text(nameText, colX.name + 5, textY, {
         width: colWidths.name - 10,
         align: "left",
-        lineGap: 2
       });
-      textY += nameHeight + 8; // Extra space after product name
+      textY += doc.heightOfString(nameText, { width: colWidths.name - 10 }) + 4;
 
-      if (descText) {
-        doc.font("Helvetica").fontSize(9).fillColor("#333333").text(descText, colX.name + 5, textY - 8, {
+      doc.font("Helvetica").fontSize(9).fillColor("#333");
+      descArray.forEach((line: string) => {
+        doc.text(line, colX.name + 5, textY - 6, {
           width: colWidths.name - 10,
           align: "left",
-          lineGap: 2
         });
+        textY += doc.heightOfString(line, { width: colWidths.name - 10 });
+      });
+
+      // Optional remarks
+      if (it.remark) {
+        doc.font("Helvetica-Oblique").fontSize(8).fillColor("#777")
+          .text(`Note: ${String(it.remark).toUpperCase()}`, colX.name + 5, textY + 2, {
+            width: colWidths.name - 10,
+            align: "left",
+          });
       }
 
-      // Other columns - vertically centered
-      // const centerY = y + (rowHeight / 2) - 5;
-      const centerY = y + (rowHeight / 2) - 8; // Adjusted for better vertical centering
+      // Qty / Rate / Amount
+      const centerY = y + (rowHeight / 2) - 8;
       doc.fillColor("#000000").font("Helvetica").fontSize(9);
       doc.text(qty.toString(), colX.qty, centerY, { width: colWidths.qty, align: "center" });
       doc.text(rate.toFixed(2), colX.rate, centerY, { width: colWidths.rate, align: "center" });
@@ -259,23 +295,36 @@ export async function POST(req: NextRequest) {
       y += rowHeight;
     }
 
-    // Total row
+    // ------------------------
+    // TOTAL SECTION
+    // ------------------------
     y = ensureSpace(baseRowHeight + 10, y);
     const words = `${numberToWords(Math.floor(grandTotal))} only`;
+
     doc.save();
     doc.rect(left, y, tableWidth, baseRowHeight).fillAndStroke("#f0f0f0", "#000");
     doc.fillColor("#000").font("Helvetica-Bold").fontSize(10);
-    doc.text(`In words: ${words}`, left + 10, y + 12, { width: tableWidth - 220 });
-    doc.text("TOTAL", colX.rate + 5, y + 12, { width: colWidths.rate - 10, align: "right" });
-    doc.text(grandTotal.toFixed(2), colX.amt + 5, y + 12, { width: colWidths.amt - 10, align: "center" });
+    doc.text(`In words: ${words}`, left + 10, y + 12, {
+      width: tableWidth - 220,
+    });
+    doc.text("TOTAL", colX.rate + 5, y + 12, {
+      width: colWidths.rate - 10,
+      align: "right",
+    });
+    doc.text(grandTotal.toFixed(2), colX.amt + 5, y + 12, {
+      width: colWidths.amt - 10,
+      align: "center",
+    });
     doc.restore();
     y += baseRowHeight + 8;
 
     drawFooter(y);
 
+    // End document
     doc.end();
     const pdfBuffer = await endPromise;
 
+    // Save in DB
     const newBill = await billModel.create({
       invoiceNo: invoice,
       date,
