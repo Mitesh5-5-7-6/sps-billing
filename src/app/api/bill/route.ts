@@ -269,7 +269,7 @@ export async function POST(req: NextRequest) {
 
       doc.font("Helvetica").fontSize(9).fillColor("#333");
       descArray.forEach((line: string) => {
-        doc.text(line, colX.name + 5, textY - 6, {
+        doc.text(line, colX.name + 5, textY - 4, {
           width: colWidths.name - 10,
           align: "left",
         });
