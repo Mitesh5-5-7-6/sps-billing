@@ -7,7 +7,7 @@ export const useCountAnimation = (
 ) => {
   const [count, setCount] = useState(0);
   const countRef = useRef(0);
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (!shouldAnimate) {
