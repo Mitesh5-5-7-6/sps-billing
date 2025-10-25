@@ -13,10 +13,11 @@ import { DeleteDialog } from '@/components/ui/DeleteDialog'
 import Notify from '@/utils/notify'
 import { useCreateProduct, useDeleteProduct, useProducts, useUpdateProduct } from '@/hooks/useProduct'
 import * as yup from "yup";
+import { StatCard } from '@/components/ui/card/StatCard';
 
 const productValidationSchema = yup.object({
-    name: yup.string().required(),
-    price: yup.string().required()
+    name: yup.string().required("Product name is required"),
+    price: yup.number().typeError("Price must be a number").required("Price is required"),
 });
 
 function ProductPage() {
@@ -29,7 +30,7 @@ function ProductPage() {
 
     const createProduct = useCreateProduct();
     const updateProduct = useUpdateProduct();
-    const deleteProduct = useDeleteProduct();
+    const deleteProduct = useDeleteProduct(hidePopup);
 
     const handleProduct = async (
         values: { name: string, price: number | null },
@@ -58,13 +59,15 @@ function ProductPage() {
         setDrawerOpen(true);
     };
 
+    console.log("Products Data:", deleteProduct.isPending);
+
     const handleDelete = (row: Product) => {
         showPopup({
             children: (
                 <DeleteDialog
                     title="Product"
                     subTitle={row.name}
-                    isSubmitting={false}
+                    isSubmitting={deleteProduct.isPending}
                     closePopup={hidePopup}
                     handleDelete={async () => {
                         try {
@@ -121,6 +124,16 @@ function ProductPage() {
                 >
                     Add Product
                 </Button>
+            </div>
+
+            <div className="p-4 mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                <StatCard
+                    title="Total Product"
+                    value={products?.data.length ?? 0}
+                    icon="product"
+                    isCurrency
+                    delay={0}
+                />
             </div>
 
             <DataTable<Product>

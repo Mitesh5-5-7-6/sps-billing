@@ -48,7 +48,7 @@ export const Button: React.FC<ButtonProps> = ({
             className={`${classes} ${disabled ? "opacity-70 cursor-not-allowed" : "cursor-pointer"
                 }`}
             onClick={onClick}
-            disabled={disabled || isLoading}
+            disabled={isLoading || disabled}
             aria-label={ariaLabel}
         >
             {isLoading ? (

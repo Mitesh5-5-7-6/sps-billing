@@ -47,6 +47,7 @@
     --black-text: #1e1e1e;
 
     --border-color: #999999;
+    --border-color-secondary: #333333;
 
     --danger-text: #fb2c36;
     --icons-red-color: red;
@@ -85,7 +86,7 @@ body {
 
 input[type="date"]::-webkit-calendar-picker-indicator {
     opacity: 0;
-    
+
     &:hover {
         cursor: pointer;
     }

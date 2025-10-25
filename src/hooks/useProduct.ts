@@ -52,7 +52,7 @@ export function useUpdateProduct() {
     });
 }
 
-export function useDeleteProduct() {
+export function useDeleteProduct(hidePopup?: () => void) {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -60,6 +60,7 @@ export function useDeleteProduct() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [PRODUCT_QUERY_KEYS.product] });
             Notify("success", "Product deleted successfully!", "Delete");
+            hidePopup?.(); // close only after React Query finishes
         },
         onError: (error: Error) => {
             Notify("danger", error.message || "Failed to delete", "Error");
